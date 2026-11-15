@@ -50,7 +50,7 @@ export function NavigationOverlays({ tabId, windowId, anchor, paneWidth, history
   );
 }
 
-type Shown = { direction: "back" | "forward"; confirmed: boolean; list: HistoryItem[] | null; selected: number };
+type Shown = { direction: "back" | "forward"; confirmed: boolean; list: HistoryItem[] | null; selected: number; listOpened: boolean };
 
 export function SwipeOverlay({ tabId }: { tabId: string }) {
   const theme = useTheme();
@@ -146,7 +146,7 @@ export function SwipeOverlay({ tabId }: { tabId: string }) {
     layoutTo(LIST_WIDTH, list.length * ROW + LIST_PAD * 2, listTop(height, list.length, 0), radius.sheet);
     Animated.timing(v.list, { toValue: 1, ...SWIPE_MOTION.list, useNativeDriver: true }).start();
     noteSwipeHistoryList("opened");
-    setShown((s) => (s ? { ...s, list, selected: 0 } : s));
+    setShown((s) => (s ? { ...s, list, selected: 0, listOpened: true } : s));
   };
 
   const closeList = () => {
@@ -189,7 +189,7 @@ export function SwipeOverlay({ tabId }: { tabId: string }) {
     if (e.phase === "began" || e.phase === "swipe") {
       resetValues(e.direction);
       g.items = historyItems(tabId, e.direction === "back" ? -1 : 1);
-      setShown({ direction: e.direction, confirmed: false, list: null, selected: 0 });
+      setShown({ direction: e.direction, confirmed: false, list: null, selected: 0, listOpened: false });
     }
     if (!g.active) return;
     if (e.phase === "swipe") {
@@ -235,7 +235,7 @@ export function SwipeOverlay({ tabId }: { tabId: string }) {
         style={StyleSheet.absoluteFill}
         canSwipeBack={history.back || !!swipeClose}
         canSwipeForward={history.forward}
-        allowsVerticalMotion={!!shown?.list}
+        allowsVerticalMotion={!!shown?.listOpened}
         onSwipe={onSwipe}
         onLayout={(e) => void (sizeRef.current = { width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}
       />

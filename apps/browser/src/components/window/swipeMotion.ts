@@ -18,6 +18,9 @@ export function capsuleOffset(progress: number, width: number) {
 }
 
 export const LIST_ROW = 38;
+const LIST_CLOSE_PROGRESS = 0.5;
+
+export const listDismissed = (progress: number) => progress < LIST_CLOSE_PROGRESS;
 
 export function listSelection(dySinceShown: number, count: number) {
   const rows = dySinceShown / SWIPE_UNIT;

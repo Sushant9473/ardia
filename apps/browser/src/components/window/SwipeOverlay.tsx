@@ -1,6 +1,7 @@
 import { devRegister } from "../dev/devRegister";
 import { SwipeArea, type SwipeAreaHandle, type SwipeEvent, concentric, POPOVER_MARGIN, radius, space, Surface, Symbol, Text, VisualEffect } from "../ui";
 import { swipeHaptic } from "../../state/app/system";
+import { noteSwipeHistoryList } from "../../state/telemetry/usage";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 import { useTheme } from "../ui/theme";
@@ -18,6 +19,7 @@ import {
   CAPSULE_SIZE_CONFIRMED,
   capsuleOffset,
   LIST_ROW,
+  listDismissed,
   listSelection,
   swipeProgress,
 } from "./swipeMotion";
@@ -143,7 +145,17 @@ export function SwipeOverlay({ tabId }: { tabId: string }) {
     v.pill.setValue(rowsAboveSelected(list.length, 0) * ROW);
     layoutTo(LIST_WIDTH, list.length * ROW + LIST_PAD * 2, listTop(height, list.length, 0), radius.sheet);
     Animated.timing(v.list, { toValue: 1, ...SWIPE_MOTION.list, useNativeDriver: true }).start();
+    noteSwipeHistoryList("opened");
     setShown((s) => (s ? { ...s, list, selected: 0 } : s));
+  };
+
+  const closeList = () => {
+    g.list = null;
+    g.selected = 0;
+    v.nudge.setValue(0);
+    Animated.timing(v.list, { toValue: 0, ...SWIPE_MOTION.list, useNativeDriver: true }).start();
+    noteSwipeHistoryList("cancelled");
+    setShown((s) => (s ? { ...s, list: null, selected: 0 } : s));
   };
 
   const select = (dy: number) => {
@@ -194,6 +206,7 @@ export function SwipeOverlay({ tabId }: { tabId: string }) {
     }
 
     const progress = swipeProgress(e.distance);
+    if (g.list && listDismissed(progress)) closeList();
     if (g.list) select(e.dy);
     else setConfirmed(progress >= 1);
     v.x.setValue(capsuleOffset(progress, g.width));
